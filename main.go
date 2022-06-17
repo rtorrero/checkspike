@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/fsnotify/fsnotify"
@@ -8,7 +9,7 @@ import (
 )
 
 func main() {
-	watchedPackages := [3]string{"pingus", "coreutils", "grep"}
+	watchedPackages := []string{"pingus"}
 
 	db, err := rpmdb.Open("/var/lib/rpm/Packages")
 	if err != nil {
@@ -35,9 +36,12 @@ func main() {
 				}
 				log.Println("event:", event)
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					db.Package(watchedPackages[0])
-					log.Println("Some RPM package was installed, updated or removed.")
-					log.Println("modified file:", event.Name)
+					for _, pkgname := range watchedPackages {
+						pkginfo, _ := db.Package(pkgname)
+						fmt.Printf("\t%+v\n", *pkginfo)
+					}
+					//log.Println("Some RPM package was installed, updated or removed.")
+					//log.Println("modified file:", event.Name)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
